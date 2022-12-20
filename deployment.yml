@@ -1,0 +1,125 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    mvnw_command_package: ./mvnw package
+    application_directory: /home/kris/spring/api_server/
+    package_location: /home/kris/spring/api_server/target/api_server-
+    mvnw_command_version_update: ./mvnw -B release:update-versions
+    docker_file: /home/kris/spring/api_server/.
+    docker_file_name: /home/kris/spring/api_server/Dockerfile
+    docker_image_name: api_server_image_beta
+    docker_image_name_tag: ':'
+    bash_command_for_image_version: cat /home/kris/spring/api_server/pom.xml | grep -e SNAPSHOT | awk -F '-' '{print $1, $2, $3}' | awk -F '<' '{print $2}' | awk -F '>' '{print $2}' | awk -F ' ' '{print $1}'
+    docker_container_name: api_server_image_beta
+    git_add_command: git -C /home/kris/spring/api_server/ add
+    filename_to_be_added_to_git: " /home/kris/spring/api_server/pom.xml"
+    git_commit_command: git -C /home/kris/spring/api_server/ commit -m
+    git_commit_command_comment: Release Version
+    git_tag_command: git -C /home/kris/spring/api_server/ tag 
+    git_tag_command_end: HEAD
+    git_push_command: git -C /home/kris/spring/api_server/ push --tags origin
+    git_branch_name: " main"
+    url_endpoint: http://192.168.122.1:8080/articles_success
+  # git -C "/home/kris/spring/api_server"
+  tasks:
+
+    - name: Gather the old version of the application
+      ansible.builtin.shell:
+       cmd: "{{ bash_command_for_image_version }}"
+      register: old_image_version
+
+    - name: Bump the version of the application with maven
+      ansible.builtin.shell:
+       cmd: "{{ mvnw_command_version_update }}"
+       chdir: "{{ application_directory }}"
+
+    - name: Gather the new version of the application
+      ansible.builtin.shell:
+       cmd: "{{ bash_command_for_image_version }}"
+      register: new_image_version
+
+    - name: Git add all changed files
+      ansible.builtin.shell:
+        cmd: "{{ git_add_command}}{{ filename_to_be_added_to_git }}"
+      vars:
+        ansible_become: false
+
+    - name: Perform a git commit
+      ansible.builtin.shell:
+        cmd: "{{ git_commit_command }} '{{ git_commit_command_comment }}:{{ new_image_version.stdout }}'"
+      vars:
+        ansible_become: false
+
+    - name: Perform a git tag
+      ansible.builtin.shell:
+        cmd: "{{ git_tag_command }} v{{ new_image_version.stdout }} {{ git_tag_command_end }}"
+      vars: 
+        ansible_become: false
+
+    - name: Perform a git push
+      ansible.builtin.shell:
+        cmd: "{{ git_push_command }}{{ git_branch_name }}"
+      vars:
+        ansible_become: false
+
+    # - set_facts:
+    #     new_image_version: "{{new_image_version.stdout}}"
+
+    - name: Create the jar file
+      ansible.builtin.shell:
+        cmd: "{{ mvnw_command_package }}"
+        chdir: "{{ application_directory }}"
+      retries: 5
+      delay: 20
+
+    - name: Check if the jar file has been created
+      ansible.builtin.stat:
+        path: "{{ package_location }}{{ new_image_version.stdout }}-SNAPSHOT.jar"
+      register: jarFileCheck
+   
+    - name: Attempt to create the jar file again, if it doesn't exist
+      ansible.builtin.shell:
+        cmd: "{{ mvnw_command_package }}"
+        chdir: "{{ application_directory }}"
+      retries: 5
+      delay: 20
+      when: 
+        - jarFileCheck.stat.exists != true
+
+    - name: Update the docker file with the new jar file name
+      ansible.builtin.lineinfile:
+        path: "{{ docker_file_name }}"
+        regexp: '^COPY target/api_server-[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}-SNAPSHOT\.jar app\.jar'
+        line: 'COPY target/api_server-{{ new_image_version.stdout }}-SNAPSHOT.jar app.jar'
+
+    - name: Build a docker image
+      community.docker.docker_image:
+        api_version: 1.41
+        name:  "{{ docker_image_name }}{{ docker_image_name_tag }}{{ new_image_version.stdout }}"
+        build: 
+          path: "{{ docker_file }}"
+          nocache: true
+          args:
+            listen_port: 8080 
+        state: present
+        source: build
+
+    - name: Start a docker container from image
+      community.docker.docker_container:
+        name: "{{ docker_container_name }}"
+        image: "{{ docker_image_name }}{{ docker_image_name_tag }}{{ new_image_version.stdout }}"
+        published_ports: 0.0.0.0:8080:8080
+        state: started
+
+    - name: Test the API endpoint of the application
+      ansible.builtin.uri:
+        url: "{{ url_endpoint }}"
+        follow_redirects: none
+        method: GET
+      register: response 
+      until: response.status == 200
+      retries: 40
+      delay: 15
+
+
