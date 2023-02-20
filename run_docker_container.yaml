@@ -1,0 +1,12 @@
+---
+ hosts: docker-engine
+ gather_facts: false
+ vars_files:
+    - ./inventory/group_vars/all/vault_variables.yaml
+ tasks:
+   - name: Start a docker container from image
+     community.docker.docker_container:
+       name: "{{ docker_container_name }}"
+       image: "{{ docker_image_name }}{{ docker_image_name_tag }}{{ new_image_version.stdout }}"
+       published_ports: "{{ '0.0.0.0:' + docker.engine.port1 | string + ':' + docker.host.port | string }}"
+       state: started

@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ./inventory/group_vars/all/vault_variables.yaml
+  tasks:
+    - name: Build a docker image
+      community.docker.docker_image:
+        api_version: 1.41
+        name:  "{{ docker_image_name }}{{ docker_image_name_tag }}{{ new_image_version.stdout }}"
+        build: 
+          path: "{{ docker_file }}"
+          nocache: true
+          args:
+            listen_port: 8080 
+        state: present
+        source: build
+
+    - name: Test the API endpoint of the application
+      ansible.builtin.uri:
+        url: "{{ url_endpoint }}"
+        follow_redirects: none
+        method: GET
+      register: response 
+      until: response.status == 200
+      retries: 40
+      delay: 15

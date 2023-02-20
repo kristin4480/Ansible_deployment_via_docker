@@ -1,0 +1,4 @@
+---
+- import_playbook: "maven.yaml"
+- import_playbook: "build_docker_image.yaml"
+- import_playbook: "run_docker_container.yaml"

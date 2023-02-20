@@ -1,0 +1,21 @@
+---
+# sensiteive data
+mvnw_command_package: ./mvnw package
+application_directory: /home/kris/spring/api_server/
+package_location: /home/kris/spring/api_server/target/api_server-
+mvnw_command_version_update: ./mvnw -B release:update-versions
+docker_file: /home/kris/spring/api_server/.
+docker_file_name: /home/kris/spring/api_server/Dockerfile
+docker_image_name: api_server_image_beta
+docker_image_name_tag: ':'
+bash_command_for_image_version: cat /home/kris/spring/api_server/pom.xml | grep -e SNAPSHOT | awk -F '-' '{print $1, $2, $3}' | awk -F '<' '{print $2}' | awk -F '>' '{print $2}' | awk -F ' ' '{print $1}'
+docker_container_name: api_server_image_beta
+git_add_command: git -C /home/kris/spring/api_server/ add
+filename_to_be_added_to_git: " /home/kris/spring/api_server/pom.xml"
+git_commit_command: git -C /home/kris/spring/api_server/ commit -m
+git_commit_command_comment: Release Version
+git_tag_command: git -C /home/kris/spring/api_server/ tag 
+git_tag_command_end: HEAD
+git_push_command: git -C /home/kris/spring/api_server/ push --tags origin
+git_branch_name: " main"
+url_endpoint: http://192.168.122.1:8080/articles_success
