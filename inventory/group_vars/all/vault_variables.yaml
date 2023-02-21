@@ -18,4 +18,5 @@ git_tag_command: git -C /home/kris/spring/api_server/ tag
 git_tag_command_end: HEAD
 git_push_command: git -C /home/kris/spring/api_server/ push --tags origin
 git_branch_name: " main"
-url_endpoint: http://192.168.122.1:8080/articles_success
+url_endpoint: http://192.168.71.61:2300/articles_success
+new_image_version:

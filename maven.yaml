@@ -19,33 +19,33 @@
       ansible.builtin.shell:
        cmd: "{{ bash_command_for_image_version }}"
       register: new_image_version
+    
+    - set_fact:
+        new_image_version: "{{new_image_version.stdout}}"
 
-    - name: Git add all changed files
-      ansible.builtin.shell:
-        cmd: "{{ git_add_command}}{{ filename_to_be_added_to_git }}"
-      vars:
-        ansible_become: false
+    # - name: Git add all changed files
+    #   ansible.builtin.shell:
+    #     cmd: "{{ git_add_command}}{{ filename_to_be_added_to_git }}"
+    #   vars:
+    #     ansible_become: false
 
-    - name: Perform a git commit
-      ansible.builtin.shell:
-        cmd: "{{ git_commit_command }} '{{ git_commit_command_comment }}:{{ new_image_version.stdout }}'"
-      vars:
-        ansible_become: false
+    # - name: Perform a git commit
+    #   ansible.builtin.shell:
+    #     cmd: "{{ git_commit_command }} '{{ git_commit_command_comment }}:{{ new_image_version.stdout }}'"
+    #   vars:
+    #     ansible_become: false
 
-    - name: Perform a git tag
-      ansible.builtin.shell:
-        cmd: "{{ git_tag_command }} v{{ new_image_version.stdout }} {{ git_tag_command_end }}"
-      vars: 
-        ansible_become: false
+    # - name: Perform a git tag
+    #   ansible.builtin.shell:
+    #     cmd: "{{ git_tag_command }} v{{ new_image_version.stdout }} {{ git_tag_command_end }}"
+    #   vars: 
+    #     ansible_become: false
 
-    - name: Perform a git push
-      ansible.builtin.shell:
-        cmd: "{{ git_push_command }}{{ git_branch_name }}"
-      vars:
-        ansible_become: false
-
-    # - set_facts:
-    #     new_image_version: "{{new_image_version.stdout}}"
+    # - name: Perform a git push
+    #   ansible.builtin.shell:
+    #     cmd: "{{ git_push_command }}{{ git_branch_name }}"
+    #   vars:
+    #     ansible_become: false
 
     - name: Create the jar file
       ansible.builtin.shell:
@@ -56,7 +56,7 @@
 
     - name: Check if the jar file has been created
       ansible.builtin.stat:
-        path: "{{ package_location }}{{ new_image_version.stdout }}-SNAPSHOT.jar"
+        path: "{{ package_location }}{{ new_image_version }}-SNAPSHOT.jar"
       register: jarFileCheck
    
     - name: Attempt to create the jar file again, if it doesn't exist
@@ -72,6 +72,7 @@
       ansible.builtin.lineinfile:
         path: "{{ docker_file_name }}"
         regexp: '^COPY target/api_server-[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}-SNAPSHOT\.jar app\.jar'
-        line: 'COPY target/api_server-{{ new_image_version.stdout }}-SNAPSHOT.jar app.jar'
-
+        line: 'COPY target/api_server-{{ new_image_version }}-SNAPSHOT.jar app.jar'
+    
+  
 

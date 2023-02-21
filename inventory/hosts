@@ -1,3 +1,5 @@
 [docker-repositories]
+192.168.71.60
 
 [docker-engine]
+192.168.71.61

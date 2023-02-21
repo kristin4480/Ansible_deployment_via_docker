@@ -1,12 +1,23 @@
 ---
- hosts: docker-engine
- gather_facts: false
- vars_files:
+- hosts: docker-engine
+  gather_facts: false
+  vars_files:
     - ./inventory/group_vars/all/vault_variables.yaml
- tasks:
-   - name: Start a docker container from image
-     community.docker.docker_container:
-       name: "{{ docker_container_name }}"
-       image: "{{ docker_image_name }}{{ docker_image_name_tag }}{{ new_image_version.stdout }}"
-       published_ports: "{{ '0.0.0.0:' + docker.engine.port1 | string + ':' + docker.host.port | string }}"
-       state: started
+  tasks:
+    - name: Start a docker container from image
+      community.docker.docker_container:
+        name: "{{ docker_container_name }}"
+        image: "{{ groups['docker-repositories'][0] }}:5000/{{ docker_image_name }}{{ docker_image_name_tag }}{{ hostvars['localhost']['new_image_version'] }}"
+        published_ports: "{{ '0.0.0.0:' + docker.engine.port1 | string + ':' + docker.host.port | string }}"
+        state: started
+      
+
+    - name: Test the API endpoint of the application
+      ansible.builtin.uri:
+        url: "{{ url_endpoint }}"
+        follow_redirects: none
+        method: GET
+      register: response 
+      until: response.status == 200
+      retries: 40
+      delay: 15
