@@ -7,7 +7,7 @@
     - name: Start a docker container from image
       community.docker.docker_container:
         name: "{{ docker_container_name }}"
-        image: "{{ groups['docker-repositories'][0] }}:5000/{{ docker_image_name }}{{ docker_image_name_tag }}{{ hostvars['localhost']['new_image_version'] }}"
+        image: "{{ groups['docker-repositories'][0] }}:{{ docker.registry.port }}/{{ docker_image_name }}{{ docker_image_name_tag }}{{ hostvars['localhost']['new_image_version'] }}"
         published_ports: "{{ '0.0.0.0:' + docker.engine.port1 | string + ':' + docker.host.port | string }}"
         state: started
       

@@ -23,30 +23,6 @@
     - set_fact:
         new_image_version: "{{new_image_version.stdout}}"
 
-    # - name: Git add all changed files
-    #   ansible.builtin.shell:
-    #     cmd: "{{ git_add_command}}{{ filename_to_be_added_to_git }}"
-    #   vars:
-    #     ansible_become: false
-
-    # - name: Perform a git commit
-    #   ansible.builtin.shell:
-    #     cmd: "{{ git_commit_command }} '{{ git_commit_command_comment }}:{{ new_image_version.stdout }}'"
-    #   vars:
-    #     ansible_become: false
-
-    # - name: Perform a git tag
-    #   ansible.builtin.shell:
-    #     cmd: "{{ git_tag_command }} v{{ new_image_version.stdout }} {{ git_tag_command_end }}"
-    #   vars: 
-    #     ansible_become: false
-
-    # - name: Perform a git push
-    #   ansible.builtin.shell:
-    #     cmd: "{{ git_push_command }}{{ git_branch_name }}"
-    #   vars:
-    #     ansible_become: false
-
     - name: Create the jar file
       ansible.builtin.shell:
         cmd: "{{ mvnw_command_package }}"

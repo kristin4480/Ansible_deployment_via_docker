@@ -5,3 +5,7 @@ docker:
     port2: 2301
   host: 
     port: 8080
+  registry:
+    port: 5000
+  docker_api:
+    version: 1.41

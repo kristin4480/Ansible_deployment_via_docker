@@ -6,20 +6,20 @@
   tasks:
     - name: Build a docker image
       community.docker.docker_image:
-        api_version: 1.41
+        api_version: "{{ docker.docker_api.version }}"
         name:  "{{ docker_image_name }}{{ docker_image_name_tag }}{{ new_image_version }}"
         build: 
           path: "{{ docker_file }}"
           nocache: true
           args:
-            listen_port: 8080 
+            listen_port: "{{ docker.host.port }}" 
         state: present
         source: build
     
     - name: Re-tag the image
       community.docker.docker_image:
-        api_version: 1.41
-        repository: "{{ item + ':5000/' + docker_image_name }}"
+        api_version: "{{ docker.docker_api.version }}"
+        repository: "{{ item + ':' + docker.repository.port + '/' + docker_image_name }}"
         name: "{{ docker_image_name }}"
         tag: "{{ new_image_version }}"
         source: local
@@ -27,8 +27,8 @@
 
     - name: Push image to remote registry
       community.docker.docker_image:
-        api_version: 1.41
-        name: "{{ item + ':5000/' + docker_image_name }}:{{ new_image_version }}"
+        api_version: "{{ docker.docker_api.version }}"
+        name: "{{ item + ':' + docker.repository.port + '/' + docker_image_name }}:{{ new_image_version }}"
         tag: "{{ new_image_version }}"
         push: true
         source: local
